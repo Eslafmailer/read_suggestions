@@ -19,6 +19,7 @@
   },
   "scripts": {
     "scrap": "tsc && node scrap.js",
+    "scrap:debug": "tsc && node --inspect-brk scrap.js",
     "label": "tsc && node label.js",
     "anonymize": "tsc && node anonymize.js",
     "accept": "tsc && node accept.js"
