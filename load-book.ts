@@ -1,12 +1,12 @@
-import {Book, config, loadWebPage} from "./shared";
+import {Book, config, loadWebPage, retry} from "./shared";
 import {load} from "cheerio";
 import {assertError, isTruthy} from "./utils";
 import moment from 'moment';
 import {DurationInputArg2} from "moment/moment";
+import axios from "axios";
 
 export async function loadBook(name: string): Promise<Book | undefined> {
     console.log(`Loading book ${name}`);
-    debugger;
     const url = config.url + `/${name}/`;
     let data: string;
     try {
@@ -176,6 +176,28 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         return mid;
     }
 
+    const getCover = async (): Promise<string | undefined> => {
+        const src = $('img.img-responsive').attr('src');
+        if (!src) {
+            throw new Error(`image not found for ${url}`);
+        }
+
+        return retry(async () => {
+            try {
+                const response = await axios.get(src, {
+                    responseType: 'arraybuffer'
+                });
+                return Buffer.from(response.data, 'binary').toString('base64');
+            } catch (ex) {
+                if(ex?.['response']?.['status'] === 404) {
+                    return undefined;
+                }
+
+                throw ex;
+            }
+        });
+    }
+
     const rating = $('.js-raty').siblings().first().text();
     const parsedRating = /score ([\d.]+)\/5 with (\d+) votes/.exec(rating);
     const [_, scoreStr, votesStr] = parsedRating ?? [];
@@ -196,6 +218,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
     return {
         id: getId(),
         name,
+        cover: await getCover(),
         views: getViews(),
         pages: getPages(),
         chapters: getChapters(),

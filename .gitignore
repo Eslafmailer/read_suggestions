@@ -1,7 +1,7 @@
 .idea
 node_modules
 config.json
-db.json
+db*.json
 data.json
 mapping.json
 result*.json

@@ -6,6 +6,7 @@ import {existsSync, readFileSync} from "fs";
 export interface Book {
     id: number;
     name: string;
+    cover?: string;
     views: number;
     year?: number;
     pages: number;
@@ -65,24 +66,28 @@ export async function loadPagedLinks(page: number, path: string): Promise<Links>
 }
 
 export async function loadWebPage(url: string): Promise<string> {
-    const MAX_ATTEMPTS = 5;
+    return retry(async () => {
+        const {data}: AxiosResponse<string> = await axios.get(url, {
+            headers: {
+                'Cookie': config.cookie
+            },
+        });
+        return data;
+    });
+}export async function retry<T>(action: () => Promise<T>): Promise<T> {
+    const MAX_ATTEMPTS = 10;
     let attempt = 0;
 
     while (true) {
         try {
-            const {data}: AxiosResponse<string> = await axios.get(url, {
-                headers: {
-                    'Cookie': config.cookie
-                },
-            });
-            return data;
+            return await action();
         } catch (ex) {
             attempt++;
             if (attempt > MAX_ATTEMPTS) {
                 throw ex;
             }
 
-            await delay(2 ** attempt);
+            await delay(1.5 ** attempt);
         }
     }
 }
