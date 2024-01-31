@@ -21,6 +21,8 @@ interface Book {
     authors: string[];
     categories: string[];
     tags: string[];
+    votes?: number;
+    score?: number;
 }
 
 (async () => {
@@ -122,12 +124,18 @@ async function loadBook(name: string): Promise<Book> {
             throw new Error(`Missing view section: ${url}`);
         }
 
-        const result = /(\d+) views/.exec(value);
-        if(!result) {
+        const result = /^([\d,]+) views/.exec(value);
+        const viewsStr = result?.[1];
+        if(!viewsStr) {
             throw new Error(`Can't parse view: '${value}' ${url}`);
         }
 
-        return Number(result[1]);
+        let views = Number(viewsStr.replace(',', ''));
+        if(isNaN(views)) {
+            throw new Error(`Can't parse views: '${value}' ${url}`);
+        }
+
+        return views;
     }
     const getPages = (): number => {
         const [value] = infos.get('page') ?? [];
@@ -135,12 +143,17 @@ async function loadBook(name: string): Promise<Book> {
             throw new Error(`Missing page section: ${url}`);
         }
 
-        const result = /(\d+) pages/.exec(value);
+        const result = /^(\d+) pages/.exec(value);
         if(!result) {
-            throw new Error(`Can't parse page: '${value}' ${url}`);
+            throw new Error(`Can't parse pages: '${value}' ${url}`);
         }
 
-        return Number(result[1]);
+        let pages = Number(result[1]);
+        if(isNaN(pages)) {
+            throw new Error(`Can't parse pages: '${value}' ${url}`);
+        }
+
+        return pages;
     }
 
     const getYear = (): number | undefined => {
@@ -153,12 +166,17 @@ async function loadBook(name: string): Promise<Book> {
             return undefined;
         }
 
-        const result = /(\d+)/.exec(value);
+        const result = /^(\d+)/.exec(value);
         if(!result) {
             throw new Error(`Can't parse year: '${value}' ${url}`);
         }
 
-        return Number(result[1]);
+        const year = Number(result[1]);
+        if(isNaN(year)) {
+            throw new Error(`Can't parse year: '${value}' ${url}`);
+        }
+
+        return year;
     }
 
     const getAuthors = (): string[] => {
@@ -186,6 +204,23 @@ async function loadBook(name: string): Promise<Book> {
         return tags;
     }
 
+    const rating = $('.js-raty').siblings().first().text();
+    const parsedRating = /score ([\d.]+)\/5 with (\d+) votes/.exec(rating);
+    const [_, scoreStr, votesStr] = parsedRating ?? [];
+    if(!scoreStr || !votesStr) {
+        throw new Error(`Can't parse rating: '${rating}' ${url}`);
+    }
+
+    const score = Number(scoreStr);
+    if(isNaN(score)) {
+        throw new Error(`Can't parse score: '${rating}' ${url}`);
+    }
+
+    const votes = Number(votesStr);
+    if(isNaN(votes)) {
+        throw new Error(`Can't parse votes: '${rating}' ${url}`);
+    }
+
     return {
         name,
         views: getViews(),
@@ -194,5 +229,7 @@ async function loadBook(name: string): Promise<Book> {
         authors: getAuthors(),
         categories: getCategories(),
         tags: getTags(),
+        score,
+        votes,
     };
 }
