@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { readFileSync, writeFileSync } from "fs";
-import {isTruthy, printError} from "./utils";
+import {isTruthy, printError, promiseAll} from "./utils";
 import {load} from "cheerio";
 
 interface Config {
@@ -31,14 +31,14 @@ interface Book {
     let page = 1;
     while(true) {
         const {names, last} = await loadPage(page++);
-        for(const name of names) {
+        await promiseAll(names, async name => {
             if(db[name]) {
                 console.log(`Book is already in DB: ${name}`);
-                continue;
+                return;
             }
 
             db[name] = await loadBook(name);
-        }
+        });
 
         writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
         if(last) {
@@ -73,7 +73,7 @@ async function loadPage(page: number): Promise<{names: string[], last: boolean}>
     console.log(`Loading page ${page}`);
     const PAGE_SIZE = 48;
     const url = config.url + `/hentai-list/all/any/all/last-added/${page}/`;
-    const {data}: AxiosResponse<string> = await axios.post( url, {
+    const {data}: AxiosResponse<string> = await axios.get( url, {
         headers: {
             'Cookie': config.cookie
         },
@@ -99,7 +99,7 @@ async function loadPage(page: number): Promise<{names: string[], last: boolean}>
 async function loadBook(name: string): Promise<Book> {
     console.log(`Loading book ${name}`);
     const url = config.url + `/${name}/`;
-    const {data}: AxiosResponse<string> = await axios.post( url, {
+    const {data}: AxiosResponse<string> = await axios.get( url, {
         headers: {
             'Cookie': config.cookie
         },
@@ -143,12 +143,13 @@ async function loadBook(name: string): Promise<Book> {
             throw new Error(`Missing page section: ${url}`);
         }
 
-        const result = /^(\d+) pages/.exec(value);
-        if(!result) {
+        const result = /^([\d,]+) pages/.exec(value);
+        const pagesStr = result?.[1];
+        if(!pagesStr) {
             throw new Error(`Can't parse pages: '${value}' ${url}`);
         }
 
-        let pages = Number(result[1]);
+        let pages = Number(pagesStr.replace(',', ''));
         if(isNaN(pages)) {
             throw new Error(`Can't parse pages: '${value}' ${url}`);
         }

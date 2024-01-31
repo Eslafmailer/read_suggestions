@@ -1,6 +1,7 @@
 import {serializeError} from 'serialize-error';
 import CircularJSON from 'circular-json';
 import {PartialDeep} from 'type-fest';
+import {chunk} from "lodash";
 
 export function printError(ex: unknown) {
     if (typeof ex === 'string') {
@@ -50,4 +51,18 @@ export function red(arg: string) {
 
 export function isTruthy<T>(value: T): value is NonNullable<T> {
     return !!value;
+}
+
+export async function promiseAll<T, R>(values: Iterable<T>, map: (t: T) => PromiseLike<R>, chunkSize = 10): Promise<Awaited<R>[]> {
+    const array: T[] = Array.isArray(values) ? values : [...values];
+    if (array.length <= chunkSize) {
+        return await Promise.all(array.map(map));
+    }
+
+    const result: Awaited<R>[] = [];
+    for (const batch of chunk(array, chunkSize)) {
+        const loadedBatch = await Promise.all(batch.map(map));
+        result.push(...loadedBatch);
+    }
+    return result;
 }
