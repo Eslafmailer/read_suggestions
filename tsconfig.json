@@ -1,0 +1,42 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "alwaysStrict": true,
+        "allowUnreachableCode": false,
+        "strictFunctionTypes": true,
+        "strictPropertyInitialization": false,
+        "strictBindCallApply": true,
+        "strictNullChecks": true,
+        "useUnknownInCatchVariables": true,
+        "exactOptionalPropertyTypes": false,
+        "skipLibCheck": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "jsx": "react",
+
+        "module": "commonjs",
+        "target": "es2020",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "sourceMap": false,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": true,
+        "importHelpers": true,
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2019",
+            "ES2021.String"
+        ],
+        "baseUrl": "."
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
