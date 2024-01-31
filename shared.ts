@@ -8,6 +8,7 @@ export interface Book {
     views: number;
     year?: number;
     pages: number;
+    chapters: number;
     authors: string[];
     categories: string[];
     tags: string[];

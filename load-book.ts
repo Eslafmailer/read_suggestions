@@ -67,6 +67,29 @@ export async function loadBook(name: string): Promise<Book | undefined> {
 
         return pages;
     }
+    const getChapters = (): number => {
+        const [value] = infos.get('page') ?? [];
+        if (!value) {
+            throw new Error(`Missing page section: ${url}`);
+        }
+
+        const result = /([\d,]+) chapters$/.exec(value);
+        if(!result) {
+            return 1;
+        }
+
+        const chaptersStr = result[1];
+        if (!chaptersStr) {
+            throw new Error(`Can't parse chapters: '${value}' ${url}`);
+        }
+
+        let chapters = Number(chaptersStr.replaceAll(',', ''));
+        if (isNaN(chapters)) {
+            throw new Error(`Can't parse chapters: '${value}' ${url}`);
+        }
+
+        return chapters;
+    }
 
     const getYear = (): number | undefined => {
         const [value] = infos.get('release year') ?? [];
@@ -137,6 +160,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         name,
         views: getViews(),
         pages: getPages(),
+        chapters: getChapters(),
         year: getYear(),
         authors: getAuthors(),
         categories: getCategories(),
