@@ -4,6 +4,7 @@ import {isTruthy, promiseAll} from "./utils";
 import {existsSync, readFileSync} from "fs";
 
 export interface Book {
+    id: number;
     name: string;
     views: number;
     year?: number;
@@ -110,23 +111,26 @@ export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>
 }
 
 export async function enableFavorites() {
+    if (await addToFavorites(38385, 5)) {
+        console.log('Enabled favorites');
+    } else {
+        throw new Error(`Failed to enable favorites`);
+    }
+}
+
+export async function addToFavorites(id: number, kind: number): Promise<boolean> {
     const {data}: AxiosResponse<{
         status: number;
     }> = await axios.post(config.url + '/api', {
         controller: "manga",
         action: "bookmark",
-        mid: "38385",
-        mode: "5",
+        mid: id,
+        mode: kind,
     }, {
         headers: {
             'Content-Type': 'multipart/form-data',
             'Cookie': config.cookie
         },
     });
-    if (data.status !== 1) {
-        console.log(JSON.stringify(data, null, 2));
-        throw new Error(`Failed to enable favorites`);
-    } else {
-        console.log('Enabled favorites');
-    }
+    return data.status === 1;
 }

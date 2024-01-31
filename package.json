@@ -20,6 +20,7 @@
   "scripts": {
     "scrap": "tsc && node scrap.js",
     "label": "tsc && node label.js",
-    "anonymize": "tsc && node anonymize.js"
+    "anonymize": "tsc && node anonymize.js",
+    "accept": "tsc && node accept.js"
   }
 }

@@ -4,5 +4,6 @@ config.json
 db.json
 data.json
 mapping.json
+result.json
 *.js
 tsconfig.tsbuildinfo

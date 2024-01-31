@@ -162,6 +162,20 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         return dates[0];
     }
 
+    const getId = (): number => {
+        const midStr = $('.js-addBookmark').data('mid');
+        if(!midStr) {
+            throw new Error(`Can't find mid ${url}`);
+        }
+
+        const mid = Number(midStr);
+        if(Number.isNaN(mid)) {
+            throw new Error(`Can't parse mid ${url}: ${midStr}`);
+        }
+
+        return mid;
+    }
+
     const rating = $('.js-raty').siblings().first().text();
     const parsedRating = /score ([\d.]+)\/5 with (\d+) votes/.exec(rating);
     const [_, scoreStr, votesStr] = parsedRating ?? [];
@@ -180,6 +194,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
     }
 
     return {
+        id: getId(),
         name,
         views: getViews(),
         pages: getPages(),
