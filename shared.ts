@@ -24,6 +24,7 @@ export interface Config {
 
 export const CONFIG_FILE_NAME = 'config.json';
 export const config: Config = JSON.parse(readFileSync(CONFIG_FILE_NAME, 'utf-8'));
+config.url = atob(config.url)
 
 export type DB = Record<string, Book>;
 export const DB_FILE_NAME = 'db.json';
