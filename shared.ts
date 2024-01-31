@@ -40,29 +40,31 @@ export interface Links {
 }
 
 export async function loadPagedLinks(page: number, path: string): Promise<Links> {
-    console.log(`Loading page ${page}`);
-    const PAGE_SIZE = 48;
-    const url = config.url + `/${atob(path)}/${page}/`;
-    const data = await loadWebPage(url);
-    const $ = load(data);
+    return await retry(async () => {
+        console.log(`Loading page ${page}`);
+        const PAGE_SIZE = 48;
+        const url = config.url + `/${atob(path)}/${page}/`;
+        const data = await loadWebPage(url);
+        const $ = load(data);
 
-    const pages = $('.pagination li').get().map(x => $(x).text().trim()).filter(isTruthy).at(-1);
-    if(!pages) {
-        throw new Error(`Can't find pagination ${url}`);
-    }
-    console.log(`Loaded page ${page}/${pages}`)
+        const pages = $('.pagination li').get().map(x => $(x).text().trim()).filter(isTruthy).at(-1);
+        if(!pages) {
+            throw new Error(`Can't find pagination ${url}`);
+        }
+        console.log(`Loaded page ${page}/${pages}`)
 
-    const $links = $('.overlay-button .btn:nth-child(2)');
-    const links = $links.get().map(x => $(x).attr('href')).filter(isTruthy);
-    const lastPage = pages === page.toString();
-    if (links.length < PAGE_SIZE && !lastPage) {
-        throw new Error(`Missing items on the page (${links.length} instead of ${PAGE_SIZE}) ${url}`);
-    }
+        const $links = $('.overlay-button .btn:nth-child(2)');
+        const links = $links.get().map(x => $(x).attr('href')).filter(isTruthy);
+        const lastPage = pages === page.toString();
+        if (links.length < PAGE_SIZE && !lastPage) {
+            throw new Error(`Missing items on the page (${links.length} instead of ${PAGE_SIZE}) ${url}`);
+        }
 
-    return {
-        names: links.map(link => link.replace(config.url + '/', '').replace(/\/$/, '')),
-        last: lastPage,
-    };
+        return {
+            names: links.map(link => link.replace(config.url + '/', '').replace(/\/$/, '')),
+            last: lastPage,
+        };
+    });
 }
 
 export async function loadWebPage(url: string): Promise<string> {
