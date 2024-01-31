@@ -47,3 +47,7 @@ export function assertError<T extends object>(err: unknown): err is PartialDeep<
 export function red(arg: string) {
     return `\u001B[91m${arg}\u001B[0m`;
 }
+
+export function isTruthy<T>(value: T): value is NonNullable<T> {
+    return !!value;
+}
