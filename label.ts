@@ -9,44 +9,49 @@ import {writeFileSync} from "fs";
     console.log('Loading False labels');
     await walkPagedLinks(
         loadFalseLinks,
-        async name => {
-            let book = db[name];
-            if (!book) {
-                book = await loadBook(name);
-                if (!book) {
-                    return;
-                }
-
-                db[name] = book;
-            }
-
-            book.label = false;
-        }, async () => {
+        createLabeler(false),
+        async () => {
             writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
         });
 
     console.log('Loading True labels');
     await walkPagedLinks(
         loadTrueLinks,
-        async name => {
-            let book = db[name];
-            if (!book) {
-                book = await loadBook(name);
-                if (!book) {
-                    return;
-                }
+        createLabeler(true),
+        async () => {
+            writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
+        });
 
-                db[name] = book;
-            }
-
-            book.label = true;
-        }, async () => {
+    console.log('Loading True labels2');
+    await walkPagedLinks(
+        loadTrueLinks2,
+        createLabeler(true),
+        async () => {
             writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
         });
 })().catch(printError);
 
+function createLabeler(value: boolean) {
+    return async function label(name: string) {
+        let book = db[name];
+        if (!book) {
+            book = await loadBook(name);
+            if (!book) {
+                return;
+            }
+
+            db[name] = book;
+        }
+
+        book.label = value;
+    }
+}
+
 async function loadTrueLinks(page: number): Promise<{ names: string[], last: boolean }> {
     return loadPagedLinks(page, 'Ym9va21hcmsvcmVhZGluZy9hbGwvbmFtZS1heg==');
+}
+async function loadTrueLinks2(page: number): Promise<{ names: string[], last: boolean }> {
+    return await loadPagedLinks(page, 'Ym9va21hcmsvcGxhbi10by1yZWFkL2FsbC9uYW1lLWF6');
 }
 
 async function loadFalseLinks(page: number): Promise<{ names: string[], last: boolean }> {
