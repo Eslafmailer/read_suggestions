@@ -6,7 +6,6 @@ import {existsSync, readFileSync} from "fs";
 export interface Book {
     id: number;
     name: string;
-    cover?: string;
     views: number;
     year?: number;
     pages: number;

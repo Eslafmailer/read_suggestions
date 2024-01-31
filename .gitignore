@@ -7,3 +7,4 @@ mapping.json
 result*.json
 *.js
 tsconfig.tsbuildinfo
+files/

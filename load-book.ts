@@ -4,10 +4,15 @@ import {assertError, isTruthy} from "./utils";
 import moment from 'moment';
 import {DurationInputArg2} from "moment/moment";
 import axios from "axios";
+import {join} from 'path';
+import {existsSync, promises} from "fs";
+
+const FILES_FOLDER = join(__dirname, 'files');
 
 export async function loadBook(name: string): Promise<Book | undefined> {
     console.log(`Loading book ${name}`);
     const url = config.url + `/${name}/`;
+
     let data: string;
     try {
         data = await loadWebPage(url);
@@ -17,6 +22,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         }
         throw ex;
     }
+
     const $ = load(data);
     const $infos = $('.list.list-simple-mini .text-primary');
     const infos = new Map<string, string[]>();
@@ -30,6 +36,15 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         const values = $info.find('a').get().map(x => $(x).text().trim().toLowerCase()).filter(isTruthy);
         infos.set(name, values);
     });
+
+    const hash = btoa(name);
+    let coverFile = join(FILES_FOLDER, hash);
+    if(!existsSync(coverFile)) {
+        const cover = await getCover();
+        if(cover) {
+            await promises.writeFile(coverFile, cover);
+        }
+    }
 
     const getViews = (): number => {
         const [value] = infos.get('view') ?? [];
@@ -176,7 +191,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         return mid;
     }
 
-    const getCover = async (): Promise<string | undefined> => {
+    async function getCover(): Promise<string | undefined> {
         const src = $('img.img-responsive').attr('src');
         if (!src) {
             throw new Error(`image not found for ${url}`);
@@ -218,7 +233,6 @@ export async function loadBook(name: string): Promise<Book | undefined> {
     return {
         id: getId(),
         name,
-        cover: await getCover(),
         views: getViews(),
         pages: getPages(),
         chapters: getChapters(),
