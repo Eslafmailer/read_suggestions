@@ -10,13 +10,15 @@ import {loadBook} from "./load-book";
         async name => {
             if (db[name]) {
                 console.log(`Book is already in DB: ${name}`);
-                return;
+                return false;
             }
 
             const book = await loadBook(name);
             if (book) {
                 db[name] = book;
             }
+
+            return undefined;
         }, async () => {
             writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
         });

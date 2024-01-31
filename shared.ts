@@ -83,11 +83,15 @@ export async function loadWebPage(url: string): Promise<string> {
     }
 }
 
-export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>, onLink: (name: string) => Promise<void>, onPage?: () => Promise<void>) {
+export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>, onLink: (name: string) => Promise<boolean | void>, onPage?: () => Promise<void>) {
     let page = 1;
     while (true) {
         const {names, last} = await loadLinks(page++);
-        await promiseAll(names, onLink);
+        const results = await promiseAll(names, onLink);
+        if (results.length && results.every(x => x === false)) {
+            console.log('breaking out of walkPagedLinks')
+            break;
+        }
 
         onPage?.();
         if (last) {
