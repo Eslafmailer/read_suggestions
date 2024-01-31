@@ -1,13 +1,13 @@
 import {printError} from "./utils";
 import randomWords from "random-words";
-import {Book, db, DB} from "./shared";
+import {Book, db} from "./shared";
 import {existsSync, readFileSync, writeFileSync} from "fs";
 
 export const MAPPING_FILE_NAME = 'mapping.json';
 export const mapping: Record<string, string> =existsSync(MAPPING_FILE_NAME) ? JSON.parse(readFileSync(MAPPING_FILE_NAME, 'utf-8')) : {};
 
 export const DATA_FILE_NAME = 'data.json';
-export const data: DB = {};
+export const data: Book[] = [];
 
 (async () => {
     for(const book of Object.values(db)) {
@@ -16,7 +16,7 @@ export const data: DB = {};
         anonymizeAll('categories', book);
         anonymizeAll('tags', book);
 
-        data[book.name] = book;
+        data.push(book);
     }
     writeFileSync(DATA_FILE_NAME, JSON.stringify(data, null, 2));
     writeFileSync(MAPPING_FILE_NAME, JSON.stringify(mapping, null, 2));
