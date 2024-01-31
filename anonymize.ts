@@ -5,13 +5,17 @@ import {existsSync, readFileSync, writeFileSync} from "fs";
 
 export const MAPPING_FILE_NAME = 'mapping.json';
 export const mapping: Record<string, string> =existsSync(MAPPING_FILE_NAME) ? JSON.parse(readFileSync(MAPPING_FILE_NAME, 'utf-8')) : {};
+const usedRandomWords = new Set<string>(Object.values(mapping));
+if (usedRandomWords.size !== Object.values(mapping).length) {
+    throw new Error(`Duplicate keys in mapping detected!`);
+}
 
 export const DATA_FILE_NAME = 'data.json';
 export const data: Book[] = [];
 
 (async () => {
     for(const book of Object.values(db)) {
-        book.name = anonymize(book.name, 5);
+        book.name = anonymize(book.name);
         anonymizeAll('authors', book);
         anonymizeAll('categories', book);
         anonymizeAll('tags', book);
@@ -23,21 +27,22 @@ export const data: Book[] = [];
 })().catch(printError);
 
 function anonymizeAll<K extends 'authors' | 'categories' | 'tags'>(key: K, book: Book) {
-    book[key] = book[key].map(x => anonymize(x, 2));
+    book[key] = book[key].map(x => anonymize(x));
 }
-function anonymize(value: string, length: number): string {
+function anonymize(value: string): string {
     let anonymized = mapping[value];
     if(!anonymized) {
-        anonymized = mapping[value] = generate(length);
+        anonymized = mapping[value] = generate();
     }
 
     return anonymized;
 }
 
-function generate(length: number): string {
+function generate(length: number = 2): string {
     while (true) {
         const words = randomWords({exactly: length, join: '-'});
-        if(!mapping[words]) {
+        if(!usedRandomWords.has(words)) {
+            usedRandomWords.add(words);
             return words;
         }
     }
