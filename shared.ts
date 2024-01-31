@@ -1,7 +1,7 @@
 import axios, {AxiosResponse} from "axios";
 import {load} from "cheerio";
 import {isTruthy, promiseAll} from "./utils";
-import {readFileSync} from "fs";
+import {existsSync, readFileSync} from "fs";
 
 export interface Book {
     name: string;
@@ -28,7 +28,7 @@ config.url = atob(config.url)
 
 export type DB = Record<string, Book>;
 export const DB_FILE_NAME = 'db.json';
-export const db: DB = JSON.parse(readFileSync(DB_FILE_NAME, 'utf-8'));
+export const db: DB = existsSync(DB_FILE_NAME) ? JSON.parse(readFileSync(DB_FILE_NAME, 'utf-8')) : {};
 
 export interface Links {
     names: string[];
