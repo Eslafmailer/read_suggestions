@@ -4,8 +4,12 @@ import {db, DB_FILE_NAME, enableFavorites, Links, loadPagedLinks, walkPagedLinks
 import {loadBook} from "./load-book";
 import * as process from "process";
 
+const PAGE_ARG = '--page=';
+
 const args = process.argv.slice(2);
 const breakEarlier = args.some(x => x === '--break-earlier');
+const pageStr = args.find(x => x.startsWith(PAGE_ARG))?.slice(PAGE_ARG.length);
+const page = pageStr ? Number(pageStr) : undefined;
 
 (async () => {
     await enableFavorites();
@@ -26,7 +30,8 @@ const breakEarlier = args.some(x => x === '--break-earlier');
         }, async () => {
             writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
         },
-        breakEarlier);
+        breakEarlier,
+        page);
 })().catch(printError);
 
 async function loadLinksFromAll(page: number): Promise<Links> {
