@@ -1,6 +1,8 @@
 import {Book, config, loadWebPage} from "./shared";
 import {load} from "cheerio";
 import {assertError, isTruthy} from "./utils";
+import moment from 'moment';
+import {DurationInputArg2} from "moment/moment";
 
 export async function loadBook(name: string): Promise<Book | undefined> {
     console.log(`Loading book ${name}`);
@@ -138,6 +140,27 @@ export async function loadBook(name: string): Promise<Book | undefined> {
 
         return tags;
     }
+    const getUploaded = (): number | undefined => {
+        const $chapters = $('.nav-chapters li');
+        const dates = $chapters.get().map(chapter => {
+            let $chapter = $(chapter);
+            const uploadedText = $chapter.find('.text-muted').text().trim().toLowerCase();
+            if (!uploadedText) {
+                throw new Error(`Can't find uploaded ${url}`);
+            }
+
+            const regex = /uploaded .* about (\d+)(.*) ago/;
+            const result = regex.exec(uploadedText);
+            if(!result) {
+                throw new Error(`Can't parse uploaded ${url}, ${uploadedText}`);
+            }
+
+            return moment().startOf('day').subtract(+result[1]!, <DurationInputArg2>result[2]).valueOf();
+        }).filter(x => x);
+
+        dates.sort();
+        return dates[0];
+    }
 
     const rating = $('.js-raty').siblings().first().text();
     const parsedRating = /score ([\d.]+)\/5 with (\d+) votes/.exec(rating);
@@ -167,5 +190,6 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         tags: getTags(),
         score,
         votes,
+        uploaded: getUploaded(),
     };
 }

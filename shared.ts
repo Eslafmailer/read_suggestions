@@ -14,6 +14,7 @@ export interface Book {
     tags: string[];
     votes: number;
     score: number;
+    uploaded?: number;
     label?: boolean;
 }
 
@@ -83,12 +84,12 @@ export async function loadWebPage(url: string): Promise<string> {
     }
 }
 
-export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>, onLink: (name: string) => Promise<boolean | void>, onPage?: () => Promise<void>) {
+export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>, onLink: (name: string) => Promise<boolean | void>, onPage?: () => Promise<void>, breakEarlier?: boolean) {
     let page = 1;
     while (true) {
         const {names, last} = await loadLinks(page++);
         const results = await promiseAll(names, onLink);
-        if (results.length && results.every(x => x === false)) {
+        if (results.length && results.every(x => x === false) && breakEarlier) {
             console.log('breaking out of walkPagedLinks')
             break;
         }

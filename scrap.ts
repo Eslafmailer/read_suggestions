@@ -2,6 +2,10 @@ import {writeFileSync} from "fs";
 import {printError} from "./utils";
 import {db, DB_FILE_NAME, enableFavorites, Links, loadPagedLinks, walkPagedLinks} from "./shared";
 import {loadBook} from "./load-book";
+import * as process from "process";
+
+const args = process.argv.slice(2);
+const breakEarlier = args.some(x => x === '--break-earlier');
 
 (async () => {
     await enableFavorites();
@@ -21,7 +25,8 @@ import {loadBook} from "./load-book";
             return undefined;
         }, async () => {
             writeFileSync(DB_FILE_NAME, JSON.stringify(db, null, 2));
-        });
+        },
+        breakEarlier);
 })().catch(printError);
 
 async function loadLinksFromAll(page: number): Promise<Links> {
