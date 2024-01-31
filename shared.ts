@@ -64,7 +64,7 @@ export async function loadPagedLinks(page: number, path: string): Promise<Links>
 }
 
 export async function loadWebPage(url: string): Promise<string> {
-    const MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 5;
     let attempt = 0;
 
     while (true) {
@@ -80,8 +80,16 @@ export async function loadWebPage(url: string): Promise<string> {
             if (attempt > MAX_ATTEMPTS) {
                 throw ex;
             }
+
+            await delay(2 ** attempt);
         }
     }
+}
+
+function delay(seconds: number): Promise<void> {
+    return new Promise<void>(resolve => {
+        setTimeout(resolve, seconds * 1000);
+    });
 }
 
 export async function walkPagedLinks(loadLinks: (page: number) => Promise<Links>, onLink: (name: string) => Promise<boolean | void>, onPage?: () => Promise<void>, breakEarlier?: boolean) {
