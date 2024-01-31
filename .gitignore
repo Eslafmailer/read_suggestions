@@ -2,5 +2,7 @@
 node_modules
 config.json
 db.json
+data.json
+mapping.json
 *.js
 tsconfig.tsbuildinfo
