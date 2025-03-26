@@ -93,7 +93,11 @@ window.addEventListener('popstate', (event) => {
 
 const randomBooksButton = document.getElementById('randomBooks');
 randomBooksButton.addEventListener('click', function() {
-    filterBooks(false, true);
+    const queryParams = new URLSearchParams(location.search);
+    queryParams.set('seed', Math.floor(Math.random() * 1000000).toString());
+    history.pushState({queryParams: queryParams.toString()}, '', `?${queryParams.toString()}`);
+
+    filterBooks(false);
 });
 
 // Function to filter options based on search input
@@ -234,10 +238,9 @@ function addFilters(filteredBooks, filterBooksWithoutAuthor) {
 }
 
 // Function to filter books based on selected categories and tags
-function filterBooks(updateUrl = true, randomize = false) {
+function filterBooks(updateUrl = true) {
+    const queryParams = new URLSearchParams(location.search);
     if (updateUrl) {
-        // Constructing query string
-        const queryParams = new URLSearchParams(location.search);
         queryParams.delete('cat');
         queryParams.delete('tag');
         queryParams.delete('decat');
@@ -268,23 +271,31 @@ function filterBooks(updateUrl = true, randomize = false) {
         return  authors.length === 0 || authors.every(author => book.authors.includes(author));
     }) : filterBooksWithoutAuthor;
 
-    displayBooks(randomize ? random(filteredBooks) : filteredBooks);
+    const seed = queryParams.get('seed');
+    displayBooks(seed ? random(filteredBooks, seed) : filteredBooks);
     addFilters(filteredBooks, filterBooksWithoutAuthor);
 
     randomBooksButton.disabled = filteredBooks.length <= BOOKS_LIMIT;
 }
-function random(filteredBooks, limit = BOOKS_LIMIT) {
+function random(filteredBooks, seed, limit = BOOKS_LIMIT) {
     if (filteredBooks.length <= limit) {
         return filteredBooks;
     }
 
+    const seededRandom = createSeededRandom(seed);
     const set = new Set();
     while(set.size < limit) {
         console.count('while');
-        set.add(Math.floor(Math.random() * filteredBooks.length));
+        set.add(Math.floor(seededRandom() * filteredBooks.length));
     }
 
     return [...set].map(x => filteredBooks[x]);
+}
+function createSeededRandom(seed) {
+    return function() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
 }
 
 // Modified displayBooks function to accept an array of books
