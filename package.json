@@ -16,7 +16,7 @@
     "random-words": "1.3.0",
     "serialize-error": "8.1.0",
     "sharp": "0.32.6",
-    "surge": "0.23.1",
+    "surge": "0.24.6",
     "tqdm": "2.0.3",
     "tslib": "2.6.2",
     "type-fest": "4.10.3",
