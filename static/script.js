@@ -298,7 +298,48 @@ function createSeededRandom(seed) {
     };
 }
 
-// Modified displayBooks function to accept an array of books
+// Cache for loaded Base64 strings
+const base64Cache = new Map();
+const loadingPromises = new Map(); // To avoid loading the same file multiple times
+async function loadBase64Image(imageName) {
+    if(!imageName) {
+        return Promise.reject();
+    }
+
+    // If already cached, return immediately
+    if (base64Cache.has(imageName)) {
+        return base64Cache.get(imageName);
+    }
+
+    // If already loading, wait for that promise
+    if (loadingPromises.has(imageName)) {
+        return loadingPromises.get(imageName);
+    }
+
+    // Otherwise, start loading
+    const loadPromise = fetch('images/' + imageName)
+        .then(resp => {
+            if (!resp.ok) {
+                throw new Error(`Failed to load image: ${imageName}`);
+            }
+            return resp.text();
+        })
+        .then(base64Data => {
+            // Cache it for future use
+            base64Cache.set(imageName, base64Data);
+            loadingPromises.delete(imageName);
+            return base64Data;
+        })
+        .catch(err => {
+            console.error(err);
+            loadingPromises.delete(imageName);
+            return null;
+        });
+
+    loadingPromises.set(imageName, loadPromise);
+    return loadPromise;
+}
+
 function displayBooks(filteredBooks, limit = BOOKS_LIMIT) {
     const booksContainer = document.getElementById('books');
     booksContainer.innerHTML = '';
@@ -320,7 +361,10 @@ function displayBooks(filteredBooks, limit = BOOKS_LIMIT) {
             link.href = `${book.href}1`;
             link.target = '_blank';
             const image = document.createElement('img');
-            image.src = `images/${images[book.id]?.image}`;
+            loadBase64Image(images[book.id]?.image).then(base64Data => {
+                base64Data = `data:image/jpeg;base64,${base64Data}`;
+                image.src = base64Data;
+            }).catch(() => {});
             image.alt = book.name;
             image.style.objectPosition = `0 -${offset}px`;
             link.appendChild(image);
@@ -334,10 +378,10 @@ function displayBooks(filteredBooks, limit = BOOKS_LIMIT) {
             bookElement.appendChild(description);
 
             Promise.race([
-                new Promise((resolve) => {
-                    image.addEventListener('load', resolve);
+                new Promise(resolve => {
+                    image.addEventListener('load', resolve, { once: true });
                 }),
-                new Promise((resolve) => setTimeout(resolve, 5000)),
+                new Promise(resolve => setTimeout(resolve, 5000)),
             ]).then(() => {
                 bookElement.className += ' shown';
             });

@@ -1,5 +1,5 @@
-import {readdirSync} from 'fs';
-import {join, parse, basename} from 'path';
+import {readdirSync, readFileSync, unlinkSync} from 'fs';
+import {join, parse} from 'path';
 import tqdm from 'tqdm';
 import sharp from 'sharp';
 import {printError} from "./utils";
@@ -45,12 +45,19 @@ type Chunk = { name: string, buffer: Buffer }[];
 
 let chunks = 0;
 async function writeChunk(chunk: Chunk) {
+    const dataFileName = chunks.toString() + '.jpeg';
+    const dataFilePath = join(OUTPUT_FOLDER, dataFileName);
+    const imageFilePath = join(OUTPUT_FOLDER, `${chunks}.jpg`);
+
     const result = await joinImages(chunk.map(x => x.buffer));
-    const output = join(OUTPUT_FOLDER, `${chunks}.jpg`);
-    await result.toFile(output);
+    await result.toFile(imageFilePath);
+    const buffer = readFileSync(imageFilePath);
+    const base64String = buffer.toString('base64');
+    writeFileSync(dataFilePath, base64String);
+    unlinkSync(imageFilePath)
+
     chunks++;
 
-    const image = basename(output);
     for (let i = 0; i < chunk.length; i++){
         const item = chunk[i];
         if(!item) {
@@ -59,7 +66,7 @@ async function writeChunk(chunk: Chunk) {
 
         const {name} = item;
         mapping[name] = {
-            image,
+            image: dataFileName,
             index: i,
         };
     }
