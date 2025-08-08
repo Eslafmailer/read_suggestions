@@ -33,6 +33,7 @@ export interface Book {
     tags: string[];
     votes: number;
     score: number;
+    likes: number;
     uploaded?: number;
     label?: boolean;
 }
@@ -83,7 +84,7 @@ export interface Links {
 export async function loadPagedLinks(page: number, path: string, retryAttempts?: number): Promise<Links> {
     return await retry(async () => {
         console.log(`Loading page ${page}`);
-        const PAGE_SIZE = 48;
+        const PAGE_SIZE = 47;
         const url = URL + `/${atob(path)}/${page}/`;
         const data = await loadWebPage(url);
         if (!data) {
@@ -138,6 +139,8 @@ export async function retry<T>(action: () => Promise<T>, attempts = 10): Promise
         try {
             return await action();
         } catch (ex) {
+            console.log('failed: ' + (<any>ex).message);
+
             attempt++;
             if (attempt >= attempts) {
                 throw ex;

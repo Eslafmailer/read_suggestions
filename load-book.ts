@@ -236,6 +236,14 @@ export async function loadBook(name: string): Promise<Book | undefined> {
     if (isNaN(votes)) {
         throw new Error(`Can't parse votes: '${rating}' ${url}`);
     }
+
+    const likesStr = $('.fa-heartbeat').parent().text();
+    const likes = Number(likesStr);
+    if (isNaN(likes)) {
+        throw new Error(`Can't parse likes: '${likesStr}' ${url}`);
+    }
+
+
     return {
         id,
         name,
@@ -248,6 +256,7 @@ export async function loadBook(name: string): Promise<Book | undefined> {
         tags: getTags(),
         score,
         votes,
+        likes,
         uploaded: getUploaded(),
     };
 }
