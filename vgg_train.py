@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import os
+from tensorflow.keras.applications.vgg16 import preprocess_input
 
 IMAGES_FOLDER = os.path.join('.', 'images')
 IMAGE_SIZE = (224, 224)
@@ -32,10 +33,14 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
     batch_size=BATCH_SIZE,
 )
 
+# Apply VGG16 preprocessing to datasets
+train_ds = train_ds.map(lambda x, y: (preprocess_input(x), y))
+val_ds = val_ds.map(lambda x, y: (preprocess_input(x), y))
+
 # Optimize input pipeline
 AUTOTUNE = tf.data.AUTOTUNE
 train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-val_ds   = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 # Load VGG16 base model
 VGG16_features=tf.keras.applications.VGG16(input_shape=IMAGE_SHAPE,
@@ -51,6 +56,7 @@ for layer in VGG16_features.layers:
 
 # Custom classification head for binary classification
 model = tf.keras.Sequential([
+    tf.keras.layers.InputLayer(input_shape=IMAGE_SHAPE),
     VGG16_features,
     tf.keras.layers.GlobalAveragePooling2D(),
     tf.keras.layers.Dense(64, activation='relu'),
