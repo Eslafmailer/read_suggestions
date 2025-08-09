@@ -12,7 +12,7 @@ BATCH_SIZE = 32
 NUM_EPOCHS = 15
 
 # Load training and validation datasets
-train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+train_ds = tf.keras.utils.image_dataset_from_directory(
     IMAGES_FOLDER,
     label_mode='binary',           # binary labels: 0.0 or 1.0
     validation_split=0.2,
@@ -22,7 +22,7 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     batch_size=BATCH_SIZE,
 )
 
-test_ds = tf.keras.preprocessing.image_dataset_from_directory(
+val_ds = tf.keras.utils.image_dataset_from_directory(
     IMAGES_FOLDER,
     label_mode='binary',
     validation_split=0.2,
@@ -32,15 +32,17 @@ test_ds = tf.keras.preprocessing.image_dataset_from_directory(
     batch_size=BATCH_SIZE,
 )
 
-steps_per_epoch = len(train_ds)
-validation_steps = len(test_ds)
+# Optimize input pipeline
+AUTOTUNE = tf.data.AUTOTUNE
+train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+val_ds   = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 # Load VGG16 base model
 VGG16_features=tf.keras.applications.VGG16(input_shape=IMAGE_SHAPE,
                                            include_top=False,
                                            weights='imagenet')
 
-# Freeze all layers except last conv layer
+# Freeze all except last conv layer
 for layer in VGG16_features.layers:
     if layer.name in ['block5_conv3']:
         layer.trainable = True
@@ -48,18 +50,12 @@ for layer in VGG16_features.layers:
         layer.trainable = False
 
 # Custom classification head for binary classification
-global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
-prediction_layer = tf.keras.layers.Dense(1, activation='sigmoid')  # 1 neuron for binary
-fc1 = tf.keras.layers.Dense(64, activation='relu')
-
-# Build the final model
 model = tf.keras.Sequential([
-  VGG16_features,
-  global_average_layer,
-  fc1,
-  prediction_layer
+    VGG16_features,
+    tf.keras.layers.GlobalAveragePooling2D(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')  # binary output
 ])
-model.summary()
 
 # Compile for binary classification
 model.compile(
@@ -67,18 +63,19 @@ model.compile(
     loss=tf.keras.losses.BinaryCrossentropy(),
     metrics=["accuracy"]
 )
+model.summary()
 
 # Train the model
-history = model.fit(train_ds,
-                    epochs=NUM_EPOCHS,
-                    steps_per_epoch=steps_per_epoch,
-                    validation_steps=validation_steps,
-                    validation_data=test_ds)
+history = model.fit(
+    train_ds,
+    epochs=NUM_EPOCHS,
+    validation_data=val_ds
+)
 
 # Save trained model
 model.save(os.path.join('.', 'trained_binary_vgg'))
 
 # Evaluate
-loss0, accuracy0 = model.evaluate(test_ds, steps=validation_steps)
-print("loss: {:.2f}".format(loss0))
-print("accuracy: {:.2f}".format(accuracy0))
+loss0, accuracy0 = model.evaluate(val_ds)
+print(f"loss: {loss0:.2f}")
+print(f"accuracy: {accuracy0:.2f}")
