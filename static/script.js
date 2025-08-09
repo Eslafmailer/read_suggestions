@@ -1,3 +1,5 @@
+const userPassword = prompt("Enter password:") || "";
+
 const BOOKS_LIMIT = 50;
 
 const selectedCategories = new Set();
@@ -325,6 +327,8 @@ async function loadBase64Image(imageName) {
             return resp.text();
         })
         .then(base64Data => {
+            base64Data = xorBase64String(base64Data);
+
             // Cache it for future use
             base64Cache.set(imageName, base64Data);
             loadingPromises.delete(imageName);
@@ -480,6 +484,35 @@ function sortBooks(term) {
             break;
         }
     }
+}
+
+function xorBase64String(base64String, position = 212) {
+    const base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const charToIndex = {};
+    for (let i = 0; i < base64Chars.length; i++) {
+        charToIndex[base64Chars[i]] = i;
+    }
+
+    // Work on string as array for easy mutation
+    let chars = base64String.split('');
+
+    for (let i = 0; i < userPassword.length && (position + i) < chars.length; i++) {
+        const char = chars[position + i];
+
+        // Skip padding '='
+        if (char === '=') continue;
+
+        const originalIndex = charToIndex[char];
+        if (originalIndex === undefined) continue; // skip non-base64 chars
+
+        const passwordByte = userPassword.charCodeAt(i);
+
+        // XOR within the 0–63 range
+        const newIndex = originalIndex ^ (passwordByte & 63);
+        chars[position + i] = base64Chars[newIndex];
+    }
+
+    return chars.join('');
 }
 
 const [authorCounts, authors] = createAuthors();
