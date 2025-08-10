@@ -39,8 +39,8 @@ val_ds = val_ds.map(lambda x, y: (preprocess_input(x), y))
 
 # Optimize input pipeline
 AUTOTUNE = tf.data.AUTOTUNE
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+train_ds = train_ds.shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
 
 # Load VGG16 base model
 VGG16_features=tf.keras.applications.VGG16(input_shape=IMAGE_SHAPE,
