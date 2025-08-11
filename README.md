@@ -50,12 +50,14 @@ Next run `npm run label` to update the label information. Again, on subsequent r
 
 Finally, run `npm run anonymize` to prepare `data.json`, file with replaced real text, so it can be made publicly available.
 
-#### Cover score
+#### Cover score (optional)
 
-To train the model first run `npm run embedd:cnn:custom:prepare` to create `images` folder with cover images. And then run `npm run embedd:cnn:custom:train` to train the model.
+To train the model first run `npm run image:prepare` to create `images` folder with cover images. And then run `npm run image:vgg:train` to train the model.
 
-When the model is trained you can calculate the scores with `npm run embedd:cnn:custom:predict` (scores are saved in `cover-vgg.json`).
+When the model is trained you can calculate the scores with `npm run image:vgg:predict` (scores are saved in `cover-score.json`).
 
 ### Prediction
 
-Upload `db.json` and `cover-vgg.json` to gdrive, then share the files and use the share IDs in `catboost.ipynb` notebook. Executing the notebook will train the predictor and will save the top predictions to `result.json`. The result can be accepted (assigned the `input_category`) by running `npm run accept`.
+Upload `db.json` and `cover-score.json` to gdrive, then share the files and use the share IDs in `catboost.ipynb` notebook. Executing the notebook will train the predictor and will save the top predictions to `result.json`. The result can be accepted (assigned the `input_category`) by running `npm run accept`.
+
+If you do not want to bother with cover scores, do the same but use `catboost_no_cover.ipynb` instead.

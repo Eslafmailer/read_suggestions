@@ -28,10 +28,12 @@
     "label": "tsc && node label.js",
     "label:all": "tsc && node label.js --update-all=true",
 
-    "embedd:cnn:custom:prepare": "tsc && node label-images.js",
-    "embedd:cnn:custom:train": "poetry run python vgg_train.py",
-    "postembedd:cnn:custom:train": "rm -rf images",
-    "embedd:cnn:custom:predict": "poetry run python vgg_run.py",
+    "image:prepare": "tsc && node label-images.js",
+    "image:vgg:train": "poetry run python vgg_train.py",
+    "postimage:vgg:train": "rm -rf images",
+    "image:vgg:predict": "poetry run python vgg_run.py",
+    "image:eff:train": "poetry run python eff_train.py",
+    "postimage:eff:train": "rm -rf images",
 
     "anonymize": "tsc && node anonymize.js",
     "accept": "tsc && node accept.js",
